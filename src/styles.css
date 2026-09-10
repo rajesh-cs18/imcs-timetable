@@ -206,52 +206,6 @@ h3 {
   background: linear-gradient(135deg, #f0f9ff, #ffffff);
 }
 
-.dashboard-card {
-  display: grid;
-  gap: 1rem;
-}
-
-.workload-chart {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.workload-row {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.workload-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.workload-meta span {
-  color: var(--text-muted);
-  font-size: 0.86rem;
-  text-align: right;
-}
-
-.workload-subjects {
-  color: var(--text-muted);
-  font-size: 0.82rem;
-}
-
-.workload-track {
-  overflow: hidden;
-  height: 0.65rem;
-  border-radius: 999px;
-  background-color: var(--surface);
-}
-
-.workload-track span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--primary), #0f766e);
-}
-
 .profile-card {
   display: grid;
   gap: 1rem;
@@ -474,15 +428,6 @@ tr:last-child td {
   .profile-panel {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .workload-meta {
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .workload-meta span {
-    text-align: left;
   }
 
   .filter-field {

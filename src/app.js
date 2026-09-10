@@ -349,31 +349,22 @@ function getTeacherWorkloads() {
   return [...workloads.values()]
     .map(workload => ({
       ...workload,
-      subjectCount: workload.subjects.size,
-      subjectList: [...workload.subjects].sort().join(', ')
+      subjectCount: workload.subjects.size
     }))
     .sort((first, second) => second.sessions - first.sessions || first.teacher.localeCompare(second.teacher));
 }
 
-function pluralize(count, singular, plural = `${singular}s`) {
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
 function renderDashboard() {
   const dashboardSummary = document.getElementById('dashboard-summary');
-  const workloadChart = document.getElementById('teacher-workload-chart');
 
-  if (!dashboardSummary || !workloadChart) {
+  if (!dashboardSummary) {
     return;
   }
 
   const programs = getAllPrograms(timetableData);
   const workloads = getTeacherWorkloads();
-  const maxWorkload = workloads[0];
-  const minWorkload = workloads[workloads.length - 1];
   const totalSessions = workloads.reduce((total, workload) => total + workload.sessions, 0);
   const totalLabSessions = workloads.reduce((total, workload) => total + workload.labs, 0);
-  const maxSessions = maxWorkload?.sessions || 1;
 
   dashboardSummary.innerHTML = `
     <article class="dashboard-stat card">
@@ -386,38 +377,12 @@ function renderDashboard() {
       <strong>${workloads.length}</strong>
       <span>Teachers assigned this semester</span>
     </article>
-    <article class="dashboard-stat card highlight">
-      <p class="eyebrow">Maximum Load</p>
-      <strong>${maxWorkload?.sessions || 0}</strong>
-      <span>${maxWorkload?.teacher || 'No teacher'} · ${pluralize(maxWorkload?.subjectCount || 0, 'subject')}</span>
-    </article>
-    <article class="dashboard-stat card calm">
-      <p class="eyebrow">Minimum Load</p>
-      <strong>${minWorkload?.sessions || 0}</strong>
-      <span>${minWorkload?.teacher || 'No teacher'} · ${pluralize(minWorkload?.subjectCount || 0, 'subject')}</span>
-    </article>
     <article class="dashboard-stat card">
       <p class="eyebrow">Total Periods</p>
       <strong>${totalSessions}</strong>
       <span>${totalLabSessions} lab periods marked separately</span>
     </article>
   `;
-
-  workloadChart.innerHTML = workloads.slice(0, 12).map(workload => {
-    const width = Math.max((workload.sessions / maxSessions) * 100, 8);
-    return `
-      <article class="workload-row">
-        <div class="workload-meta">
-          <strong>${workload.teacher}</strong>
-          <span>${pluralize(workload.sessions, 'period')}</span>
-        </div>
-        <p class="workload-subjects">${workload.subjectList}</p>
-        <div class="workload-track" aria-hidden="true">
-          <span style="width: ${width}%"></span>
-        </div>
-      </article>
-    `;
-  }).join('');
 }
 
 // Render Student Schedule
