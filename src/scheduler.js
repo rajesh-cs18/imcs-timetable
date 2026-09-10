@@ -38,6 +38,35 @@ export function isLabClass(entry) {
   return subject.toLowerCase().includes('lab') || room.toLowerCase().includes('lab');
 }
 
+export function normalizeTeacherName(teacherName) {
+  return (teacherName || '')
+    .replace(/\bMr\.\s*M\.?\s+Rafiq\s+Mallah\b/i, 'Mr. M. Rafiq Mallah')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function normalizeSubjectTitle(subjectTitle) {
+  const subject = (subjectTitle || '').trim();
+  const labMatch = subject.match(/^Lab\s*\((.+)\)$/i);
+
+  if (!labMatch) {
+    return subject;
+  }
+
+  const subjectAliases = {
+    CA: 'Computer Architecture',
+    CN: 'Computer Network',
+    DBS: 'Data Base System',
+    DLD: 'Digital Logic Design',
+    HCICG: 'HCI & Computer Graphics',
+    NLP: 'Natural Language Processing',
+    OOP: 'Object Oriented Programming',
+    PDC: 'Parallel & Distributed Computing'
+  };
+
+  return subjectAliases[labMatch[1]] || labMatch[1];
+}
+
 export function normalizeRoomName(roomName) {
   if (!roomName) {
     return '';
@@ -77,6 +106,8 @@ export function getAllPrograms(timetableData) {
           ? program.schedule.map(entry => ({
             ...entry,
             isLab: isLabClass(entry),
+            subjectGroup: normalizeSubjectTitle(entry.subject),
+            teacher: normalizeTeacherName(entry.teacher),
             room: normalizeRoomName(entry.room)
           }))
           : []
@@ -112,7 +143,7 @@ export function getClassesAtTime(timetableData, day, targetTimeMinutes) {
 // Gets schedule filtered by teacher initials or full name
 export function getTeacherSchedule(timetableData, teacherQuery) {
   const teacherClasses = [];
-  const query = teacherQuery.toLowerCase();
+  const query = normalizeTeacherName(teacherQuery).toLowerCase();
   const programs = getAllPrograms(timetableData);
 
   programs.forEach(program => {

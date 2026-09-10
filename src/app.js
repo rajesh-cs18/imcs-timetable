@@ -3,7 +3,9 @@ import {
   getClassesAtTime,
   getTeacherSchedule,
   getRoomOccupancyStatus,
-  parseTimeRange
+  parseTimeRange,
+  normalizeSubjectTitle,
+  normalizeTeacherName
 } from './scheduler.js';
 
 let timetableData = null;
@@ -27,6 +29,7 @@ async function initApp() {
     updateProfileSectionControl();
     setupTabSwitching();
     setupEventListeners();
+    renderDashboard();
     renderRoomStatus();
     renderStudentSchedule();
     updateLiveStatus();
@@ -49,7 +52,7 @@ function populateTeacherDropdown() {
   programs.forEach(program => {
     program.schedule.forEach(entry => {
       if (entry.teacher) {
-        teachersSet.add(entry.teacher.trim());
+        teachersSet.add(normalizeTeacherName(entry.teacher));
       }
     });
   });
@@ -133,23 +136,7 @@ function populateProgramDropdown() {
     return;
   }
 
-  const selectedDepartment = departmentSelect.value;
-  const currentProgram = classSelect.value;
-  const programs = getAllPrograms(timetableData)
-    .filter(program => program.department === selectedDepartment)
-    .map(program => program.class);
-
-  classSelect.innerHTML = '<option value="">-- Select Class --</option>';
-  programs.forEach(programName => {
-    const option = document.createElement('option');
-    option.value = programName;
-    option.textContent = programName;
-    classSelect.appendChild(option);
-  });
-
-  if (programs.includes(currentProgram)) {
-    classSelect.value = currentProgram;
-  }
+  populateProgramSelect(classSelect, departmentSelect.value, '-- Select Class --');
 }
 
 function populateProfileTeacherDropdown() {
@@ -171,13 +158,16 @@ function populateProfileProgramDropdown() {
     return;
   }
 
-  const selectedDepartment = departmentSelect.value;
+  populateProgramSelect(classSelect, departmentSelect.value, '-- Select Part --');
+}
+
+function populateProgramSelect(classSelect, selectedDepartment, placeholder) {
   const currentProgram = classSelect.value;
   const programs = getAllPrograms(timetableData)
     .filter(program => program.department === selectedDepartment)
     .map(program => program.class);
 
-  classSelect.innerHTML = '<option value="">-- Select Part --</option>';
+  classSelect.innerHTML = `<option value="">${placeholder}</option>`;
   programs.forEach(programName => {
     const option = document.createElement('option');
     option.value = programName;
@@ -238,7 +228,7 @@ function showStudentProfile() {
 }
 
 function applyFacultyProfile() {
-  const teacherName = document.getElementById('profile-teacher-select')?.value || '';
+  const teacherName = normalizeTeacherName(document.getElementById('profile-teacher-select')?.value || '');
   const teacherSelect = document.getElementById('teacher-select');
 
   if (!teacherName || !teacherSelect) {
@@ -325,6 +315,109 @@ function sortByRoomName(first, second) {
 
 function sortEntriesByRoom(first, second) {
   return sortByRoomName(first.room || '', second.room || '');
+}
+
+function getTeacherWorkloads() {
+  const workloads = new Map();
+
+  getAllPrograms(timetableData).forEach(program => {
+    program.schedule.forEach(entry => {
+      if (!entry.teacher) {
+        return;
+      }
+
+      const teacher = normalizeTeacherName(entry.teacher);
+      const subject = entry.subjectGroup || normalizeSubjectTitle(entry.subject);
+      const workload = workloads.get(teacher) || {
+        teacher,
+        sessions: 0,
+        subjects: new Set(),
+        labs: 0
+      };
+
+      workload.sessions += 1;
+    workload.subjects.add(subject);
+
+      if (entry.isLab) {
+        workload.labs += 1;
+      }
+
+      workloads.set(teacher, workload);
+    });
+  });
+
+  return [...workloads.values()]
+    .map(workload => ({
+      ...workload,
+      subjectCount: workload.subjects.size,
+      subjectList: [...workload.subjects].sort().join(', ')
+    }))
+    .sort((first, second) => second.sessions - first.sessions || first.teacher.localeCompare(second.teacher));
+}
+
+function pluralize(count, singular, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function renderDashboard() {
+  const dashboardSummary = document.getElementById('dashboard-summary');
+  const workloadChart = document.getElementById('teacher-workload-chart');
+
+  if (!dashboardSummary || !workloadChart) {
+    return;
+  }
+
+  const programs = getAllPrograms(timetableData);
+  const workloads = getTeacherWorkloads();
+  const maxWorkload = workloads[0];
+  const minWorkload = workloads[workloads.length - 1];
+  const totalSessions = workloads.reduce((total, workload) => total + workload.sessions, 0);
+  const totalLabSessions = workloads.reduce((total, workload) => total + workload.labs, 0);
+  const maxSessions = maxWorkload?.sessions || 1;
+
+  dashboardSummary.innerHTML = `
+    <article class="dashboard-stat card">
+      <p class="eyebrow">Programs</p>
+      <strong>${programs.length}</strong>
+      <span>CS and AI batches in the timetable</span>
+    </article>
+    <article class="dashboard-stat card">
+      <p class="eyebrow">Faculty</p>
+      <strong>${workloads.length}</strong>
+      <span>Teachers assigned this semester</span>
+    </article>
+    <article class="dashboard-stat card highlight">
+      <p class="eyebrow">Maximum Load</p>
+      <strong>${maxWorkload?.sessions || 0}</strong>
+      <span>${maxWorkload?.teacher || 'No teacher'} · ${pluralize(maxWorkload?.subjectCount || 0, 'subject')}</span>
+    </article>
+    <article class="dashboard-stat card calm">
+      <p class="eyebrow">Minimum Load</p>
+      <strong>${minWorkload?.sessions || 0}</strong>
+      <span>${minWorkload?.teacher || 'No teacher'} · ${pluralize(minWorkload?.subjectCount || 0, 'subject')}</span>
+    </article>
+    <article class="dashboard-stat card">
+      <p class="eyebrow">Total Periods</p>
+      <strong>${totalSessions}</strong>
+      <span>${totalLabSessions} lab periods marked separately</span>
+    </article>
+  `;
+
+  workloadChart.innerHTML = workloads.slice(0, 12).map(workload => {
+    const width = Math.max((workload.sessions / maxSessions) * 100, 8);
+    return `
+      <article class="workload-row">
+        <div class="workload-meta">
+          <strong>${workload.teacher}</strong>
+          <span>${pluralize(workload.subjectCount, 'subject')} · ${pluralize(workload.sessions, 'period')}${workload.labs ? ` · ${pluralize(workload.labs, 'lab')}` : ''}</span>
+        </div>
+        <p class="workload-subjects">${workload.subjectList}</p>
+        <div class="workload-track" aria-hidden="true">
+          <span style="width: ${width}%"></span>
+        </div>
+      </article>
+    `;
+  }).join('');
 }
 
 // Render Student Schedule
