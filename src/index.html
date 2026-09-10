@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMCS Interactive Timetable</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="header-container">
+      <div>
+        <p class="eyebrow">2nd Semester 2026</p>
+        <h1>IMCS Schedule Hub</h1>
+      </div>
+      <div id="live-time-badge" class="badge">Loading live time...</div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <nav class="tab-nav" aria-label="Timetable views">
+      <button class="tab-btn active" type="button" data-tab="live-status">Live Status</button>
+      <button class="tab-btn" type="button" data-tab="student-view">Student View</button>
+      <button class="tab-btn" type="button" data-tab="teacher-view">Teacher View</button>
+      <button class="tab-btn" type="button" data-tab="room-status">Room/Lab Finder</button>
+    </nav>
+
+    <section class="card profile-card" aria-labelledby="profile-heading">
+      <div>
+        <p class="eyebrow">Personalize</p>
+        <h2 id="profile-heading">Who are you?</h2>
+      </div>
+      <div class="profile-actions" role="group" aria-label="Choose your role">
+        <button id="profile-faculty-btn" class="role-btn" type="button">Faculty</button>
+        <button id="profile-student-btn" class="role-btn" type="button">Student</button>
+      </div>
+
+      <div id="faculty-profile-panel" class="profile-panel hidden">
+        <label for="profile-teacher-select">Your Name:</label>
+        <select id="profile-teacher-select">
+          <option value="">-- Select Faculty Member --</option>
+        </select>
+      </div>
+
+      <div id="student-profile-panel" class="profile-panel hidden">
+        <label for="profile-dept-select">Department:</label>
+        <select id="profile-dept-select">
+          <option value="Computer Science">Computer Science</option>
+          <option value="Artificial Intelligence">Artificial Intelligence</option>
+        </select>
+
+        <label for="profile-class-select">Part:</label>
+        <select id="profile-class-select">
+          <option value="">-- Select Part --</option>
+        </select>
+
+        <div id="profile-section-field" class="filter-field">
+          <label for="profile-section-select">Track:</label>
+          <select id="profile-section-select">
+            <option value="">-- Select Track --</option>
+            <option value="PM">Pre-Medical Track (PM)</option>
+            <option value="PE">Pre-Engineering Track (PE)</option>
+          </select>
+        </div>
+
+        <button id="apply-student-profile-btn" class="action-btn" type="button">Show My Schedule</button>
+      </div>
+    </section>
+
+    <section id="live-status" class="tab-content active">
+      <div class="card intro-card">
+        <div>
+          <p class="eyebrow">Now</p>
+          <h2>Currently Active Classes</h2>
+        </div>
+        <div class="simulation-panel">
+          <p class="eyebrow">Preview Status</p>
+          <div class="filter-group">
+            <label for="simulation-day-select">Day:</label>
+            <select id="simulation-day-select">
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+            </select>
+
+            <label for="simulation-time-slot-select">Time Slot:</label>
+            <select id="simulation-time-slot-select">
+              <option value="8.30 To 9.20">8:30 AM - 9:20 AM</option>
+              <option value="9.20 To 10.10">9:20 AM - 10:10 AM</option>
+              <option value="10.10 To 11.00">10:10 AM - 11:00 AM</option>
+              <option value="11.00 To 11.50">11:00 AM - 11:50 AM</option>
+              <option value="11.50 To 12.40">11:50 AM - 12:40 PM</option>
+              <option value="12.40 To 1.30">12:40 PM - 1:30 PM</option>
+            </select>
+
+            <button id="run-simulation-btn" class="action-btn" type="button">Preview Status</button>
+            <button id="live-mode-btn" class="action-btn secondary" type="button">Show Current Status</button>
+          </div>
+        </div>
+      </div>
+      <div id="active-classes-list" class="grid-container"></div>
+    </section>
+
+    <section id="student-view" class="tab-content">
+      <div class="card filter-card">
+        <p class="eyebrow">Students</p>
+        <h2>Filter Schedule by Class</h2>
+        <div class="filter-group">
+          <label for="dept-select">Department:</label>
+          <select id="dept-select">
+            <option value="Computer Science">Computer Science</option>
+            <option value="Artificial Intelligence">Artificial Intelligence</option>
+          </select>
+
+          <label for="class-select">Select Program / Year:</label>
+          <select id="class-select">
+            <option value="">-- Select Class --</option>
+          </select>
+
+          <div id="section-field" class="filter-field">
+            <label for="section-select">Track:</label>
+            <select id="section-select">
+              <option value="">-- Select Track --</option>
+              <option value="PM">Pre-Medical Track (PM)</option>
+              <option value="PE">Pre-Engineering Track (PE)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="student-schedule-results" class="results-container"></div>
+    </section>
+
+    <section id="teacher-view" class="tab-content">
+      <div class="card filter-card">
+        <p class="eyebrow">Faculty</p>
+        <h2>Teacher Workload & Timetable</h2>
+        <div class="filter-group">
+          <label for="teacher-select">Select Teacher:</label>
+          <select id="teacher-select">
+            <option value="">-- Select Faculty Member --</option>
+          </select>
+        </div>
+      </div>
+      <div id="teacher-schedule-results" class="results-container"></div>
+    </section>
+
+    <section id="room-status" class="tab-content">
+      <div class="card filter-card">
+        <p class="eyebrow">Rooms</p>
+        <h2>Check Room & Lab Availability</h2>
+        <div class="filter-group">
+          <label for="day-select">Day:</label>
+          <select id="day-select">
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+          </select>
+
+          <label for="time-slot-select">Time Slot:</label>
+          <select id="time-slot-select">
+            <option value="8.30 To 9.20">8:30 AM - 9:20 AM</option>
+            <option value="9.20 To 10.10">9:20 AM - 10:10 AM</option>
+            <option value="10.10 To 11.00">10:10 AM - 11:00 AM</option>
+            <option value="11.00 To 11.50">11:00 AM - 11:50 AM</option>
+            <option value="11.50 To 12.40">11:50 AM - 12:40 PM</option>
+            <option value="12.40 To 1.30">12:40 PM - 1:30 PM</option>
+          </select>
+        </div>
+      </div>
+      <div id="room-status-results" class="grid-container"></div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>
