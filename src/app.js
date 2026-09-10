@@ -336,7 +336,7 @@ function getTeacherWorkloads() {
       };
 
       workload.sessions += 1;
-    workload.subjects.add(subject);
+      workload.subjects.add(subject);
 
       if (entry.isLab) {
         workload.labs += 1;
@@ -409,7 +409,7 @@ function renderDashboard() {
       <article class="workload-row">
         <div class="workload-meta">
           <strong>${workload.teacher}</strong>
-          <span>${pluralize(workload.subjectCount, 'subject')} · ${pluralize(workload.sessions, 'period')}${workload.labs ? ` · ${pluralize(workload.labs, 'lab')}` : ''}</span>
+          <span>${pluralize(workload.sessions, 'period')}</span>
         </div>
         <p class="workload-subjects">${workload.subjectList}</p>
         <div class="workload-track" aria-hidden="true">
